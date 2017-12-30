@@ -3,6 +3,7 @@ package com.balthazargronon.RCTZeroconf;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -139,20 +140,23 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
             service.putString(KEY_SERVICE_HOST, serviceInfo.getHost().getHostName());
             service.putInt(KEY_SERVICE_PORT, serviceInfo.getPort());
 
-            WritableMap txtRecords = new WritableNativeMap();
+            // For Lollipop devices and above
+            if (Build.VERSION.SDK_INT >= 21) {
+                WritableMap txtRecords = new WritableNativeMap();
 
-            Map<String, byte[]> attributes = serviceInfo.getAttributes();
-            for (String key : attributes.keySet()) {
-              try {
-                byte[] recordValue = attributes.get(key);
-                txtRecords.putString(String.format(Locale.getDefault(), "%s", key), String.format(Locale.getDefault(), "%s", recordValue != null ? new String(recordValue, "UTF_8") : ""));
-              } catch (UnsupportedEncodingException e) {
-                String error = "Failed to encode txtRecord: " + e;
-                sendEvent(getReactApplicationContext(), EVENT_ERROR, error);
-              }
+                Map<String, byte[]> attributes = serviceInfo.getAttributes();
+                for (String key : attributes.keySet()) {
+                    try {
+                        byte[] recordValue = attributes.get(key);
+                        txtRecords.putString(String.format(Locale.getDefault(), "%s", key), String.format(Locale.getDefault(), "%s", recordValue != null ? new String(recordValue, "UTF_8") : ""));
+                    } catch (UnsupportedEncodingException e) {
+                        String error = "Failed to encode txtRecord: " + e;
+                        sendEvent(getReactApplicationContext(), EVENT_ERROR, error);
+                    }
+                }
+
+                service.putMap(KEY_SERVICE_TXT, txtRecords);
             }
-
-            service.putMap(KEY_SERVICE_TXT, txtRecords);
 
             WritableArray addresses = new WritableNativeArray();
             addresses.pushString(serviceInfo.getHost().getHostAddress());
