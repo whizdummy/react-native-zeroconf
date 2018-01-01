@@ -15,6 +15,15 @@ export default class Zeroconf extends EventEmitter {
   }
 
   /**
+   * Register Zeroconf service
+   */
+  register (type = 'http', protocol = 'tcp', domain = 'local.', name = '', port = 0) {
+    this._services = {}
+
+    RNZeroconf.register(type, protocol, domain, name, port)
+  }
+
+  /**
    * Add all event listeners
    */
   addDeviceListeners () {

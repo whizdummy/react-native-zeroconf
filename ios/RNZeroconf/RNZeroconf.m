@@ -21,6 +21,25 @@
 
 RCT_EXPORT_MODULE()
 
+RCT_EXPORT_METHOD(register: (NSString *) type
+                  protocol: (NSString *) protocol
+                  domain: (NSString *) domain
+                  serviceName: (NSString *) serviceName
+                  port: (int) port)
+{
+    // Initialize service
+    self.service = [[NSNetService alloc] initWithDomain:domain
+                                                   type:[NSString stringWithFormat:@"_%@._%@.", type, protocol]
+                                                   name:serviceName
+                                                   port:port];
+    
+    // Configure service
+    [self.service setDelegate:self];
+    
+    // Publish service
+    [self.service publish];
+}
+
 RCT_EXPORT_METHOD(scan:(NSString *)type protocol:(NSString *)protocol domain:(NSString *)domain)
 {
     [self stop];
