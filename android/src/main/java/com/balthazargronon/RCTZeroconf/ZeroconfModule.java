@@ -43,6 +43,7 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
 
     protected NsdManager mNsdManager;
     protected NsdManager.DiscoveryListener mDiscoveryListener;
+    protected NsdManager.RegistrationListener mRegistrationListener;
 
     public ZeroconfModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -51,6 +52,57 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return "RNZeroconf";
+    }
+
+    @ReactMethod
+    public void register(String type, String protocol, String domain, String name, int port) {
+        if (mNsdManager == null) {
+            mNsdManager = (NsdManager) getReactApplicationContext().getSystemService(Context.NSD_SERVICE);
+        }
+
+        this.stop();
+
+        mRegistrationListener = new NsdManager.RegistrationListener() {
+            @Override
+            public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                String error = "Registration of service discovery failed with code: " + errorCode;
+                sendEvent(getReactApplicationContext(), EVENT_ERROR, error);
+            }
+
+            @Override
+            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                String error = "Unregistration of service discovery failed with code: " + errorCode;
+                sendEvent(getReactApplicationContext(), EVENT_ERROR, error);
+            }
+
+            @Override
+            public void onServiceRegistered(NsdServiceInfo serviceInfo) {
+                WritableMap service = new WritableNativeMap();
+                service.putString(KEY_SERVICE_NAME, serviceInfo.getServiceName());
+
+                sendEvent(getReactApplicationContext(), EVENT_FOUND, service);
+
+                mNsdManager.resolveService(serviceInfo, new ZeroResolveListener());
+            }
+
+            @Override
+            public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
+                WritableMap service = new WritableNativeMap();
+                service.putString(KEY_SERVICE_NAME, serviceInfo.getServiceName());
+                sendEvent(getReactApplicationContext(), EVENT_REMOVE, service);
+            }
+        };
+
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
+        serviceInfo.setServiceName(name);
+        serviceInfo.setServiceType(String.format("_%s._%s.", type, protocol));
+        serviceInfo.setPort(port);
+
+        mNsdManager.registerService(
+                serviceInfo,
+                NsdManager.PROTOCOL_DNS_SD,
+                mRegistrationListener
+        );
     }
 
     @ReactMethod
