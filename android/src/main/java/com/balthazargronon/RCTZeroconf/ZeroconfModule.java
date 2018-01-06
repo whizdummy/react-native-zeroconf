@@ -81,8 +81,6 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
                 service.putString(KEY_SERVICE_NAME, serviceInfo.getServiceName());
 
                 sendEvent(getReactApplicationContext(), EVENT_FOUND, service);
-
-                mNsdManager.resolveService(serviceInfo, new ZeroResolveListener());
             }
 
             @Override
