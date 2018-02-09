@@ -1,10 +1,13 @@
 package com.balthazargronon.RCTZeroconf;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
+import android.util.Log;
 
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -25,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * Created by Jeremy White on 8/1/2016.
  * Copyright © 2016 Balthazar Gronon MIT
  */
-public class ZeroconfModule extends ReactContextBaseJavaModule {
+public class ZeroconfModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String EVENT_START = "RNZeroconfStart";
     public static final String EVENT_STOP = "RNZeroconfStop";
@@ -47,6 +50,8 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
 
     public ZeroconfModule(ReactApplicationContext reactContext) {
         super(reactContext);
+
+        reactContext.addLifecycleEventListener(this);
     }
 
     @Override
@@ -101,6 +106,13 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
                 NsdManager.PROTOCOL_DNS_SD,
                 mRegistrationListener
         );
+    }
+
+    @ReactMethod
+    public void unregister() {
+        if (mRegistrationListener != null) {
+            mNsdManager.unregisterService(mRegistrationListener);
+        }
     }
 
     @ReactMethod
@@ -221,5 +233,24 @@ public class ZeroconfModule extends ReactContextBaseJavaModule {
     public void onCatalystInstanceDestroy() {
         super.onCatalystInstanceDestroy();
         stop();
+
+        getReactApplicationContext().removeLifecycleEventListener(this);
+    }
+
+    @Override
+    public void onHostResume() {
+        Log.e("onHostResume", "Resumed");
+    }
+
+    @Override
+    public void onHostPause() {
+        Log.e("onHostPause", "Paused");
+    }
+
+    @Override
+    public void onHostDestroy() {
+        Log.e("onHostDestroy", "Destroyed");
+
+        unregister();
     }
 }

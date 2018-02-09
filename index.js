@@ -24,6 +24,13 @@ export default class Zeroconf extends EventEmitter {
   }
 
   /**
+   * Unregister Zeroconf service
+   */
+  unregister () {
+    RNZeroconf.unregister();
+  }
+
+  /**
    * Add all event listeners
    */
   addDeviceListeners () {
