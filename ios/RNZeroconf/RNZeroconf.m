@@ -40,6 +40,12 @@ RCT_EXPORT_METHOD(register: (NSString *) type
     [self.service publish];
 }
 
+RCT_EXPORT_METHOD(unregister)
+{
+    // Unpublish service
+    [self.service stop];
+}
+
 RCT_EXPORT_METHOD(scan:(NSString *)type protocol:(NSString *)protocol domain:(NSString *)domain)
 {
     [self stop];
