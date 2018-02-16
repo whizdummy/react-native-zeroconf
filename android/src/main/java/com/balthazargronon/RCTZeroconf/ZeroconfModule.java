@@ -1,6 +1,5 @@
 package com.balthazargronon.RCTZeroconf;
 
-import android.app.Activity;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
@@ -20,6 +19,11 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import javax.annotation.Nullable;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
 import java.io.UnsupportedEncodingException;
@@ -57,6 +61,26 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
     @Override
     public String getName() {
         return "RNZeroconf";
+    }
+
+    private InetAddress __getInetIpAddress() {
+        InetAddress ip = null;
+
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (! inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                        ip = inetAddress;
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e(EVENT_ERROR, ex.toString());
+        }
+
+        return ip;
     }
 
     @ReactMethod
@@ -100,6 +124,7 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
         serviceInfo.setServiceName(name);
         serviceInfo.setServiceType(String.format("_%s._%s.", type, protocol));
         serviceInfo.setPort(port);
+        serviceInfo.setHost(__getInetIpAddress());
 
         mNsdManager.registerService(
                 serviceInfo,
@@ -221,7 +246,8 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
             }
 
             WritableArray addresses = new WritableNativeArray();
-            addresses.pushString(serviceInfo.getHost().getHostAddress());
+            // addresses.pushString(serviceInfo.getHost().getHostAddress());
+            addresses.pushString(__getInetIpAddress().getHostAddress());
 
             service.putArray(KEY_SERVICE_ADDRESSES, addresses);
 
