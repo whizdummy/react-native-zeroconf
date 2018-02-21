@@ -246,8 +246,8 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
             }
 
             WritableArray addresses = new WritableNativeArray();
-            // addresses.pushString(serviceInfo.getHost().getHostAddress());
-            addresses.pushString(__getInetIpAddress().getHostAddress());
+            addresses.pushString(serviceInfo.getHost().getHostAddress());
+            // addresses.pushString(__getInetIpAddress().getHostAddress());
 
             service.putArray(KEY_SERVICE_ADDRESSES, addresses);
 
