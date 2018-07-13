@@ -51,6 +51,7 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
     protected NsdManager mNsdManager;
     protected NsdManager.DiscoveryListener mDiscoveryListener;
     protected NsdManager.RegistrationListener mRegistrationListener;
+    protected boolean isRegistered = false;
 
     public ZeroconfModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -109,6 +110,8 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
                 WritableMap service = new WritableNativeMap();
                 service.putString(KEY_SERVICE_NAME, serviceInfo.getServiceName());
 
+                isRegistered = true;
+
                 sendEvent(getReactApplicationContext(), EVENT_FOUND, service);
             }
 
@@ -116,6 +119,9 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
             public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
                 WritableMap service = new WritableNativeMap();
                 service.putString(KEY_SERVICE_NAME, serviceInfo.getServiceName());
+
+                isRegistered = false;
+
                 sendEvent(getReactApplicationContext(), EVENT_REMOVE, service);
             }
         };
@@ -126,11 +132,15 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
         serviceInfo.setPort(port);
         serviceInfo.setHost(__getInetIpAddress());
 
-        mNsdManager.registerService(
-                serviceInfo,
-                NsdManager.PROTOCOL_DNS_SD,
-                mRegistrationListener
-        );
+        if (!isRegistered) {
+            mNsdManager.registerService(
+                    serviceInfo,
+                    NsdManager.PROTOCOL_DNS_SD,
+                    mRegistrationListener
+            );
+        } else {
+            Log.e("REGISTRATION", "Service already registered");
+        }
     }
 
     @ReactMethod
@@ -140,6 +150,8 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
                 mNsdManager.unregisterService(mRegistrationListener);
             }
         } catch (Exception ex) {
+            isRegistered = false;
+
             sendEvent(getReactApplicationContext(), EVENT_ERROR, ex.getMessage());
         }
     }
