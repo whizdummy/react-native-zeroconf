@@ -135,8 +135,12 @@ public class ZeroconfModule extends ReactContextBaseJavaModule implements Lifecy
 
     @ReactMethod
     public void unregister() {
-        if (mRegistrationListener != null) {
-            mNsdManager.unregisterService(mRegistrationListener);
+        try {
+            if (mRegistrationListener != null) {
+                mNsdManager.unregisterService(mRegistrationListener);
+            }
+        } catch (Exception ex) {
+            sendEvent(getReactApplicationContext(), EVENT_ERROR, ex.getMessage());
         }
     }
 
